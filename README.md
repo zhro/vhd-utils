@@ -1,12 +1,10 @@
 # vhd-utils
 These are simple utilities to manipulate Virtual Hard Disks (VHD/VHDX) from the command line.
 
+This project is based on the original work by [neozeed](https://github.com/neozeed) in the [VHD-Utilities repository](https://github.com/neozeed/VHD-Utilities). The original source code has been modified and extended with additional command-line options, size suffix support, and VHD geometry handling improvements.
+
 VHD Utilities
 Version 1.1
-
-### Attribution
-
-This project is based on the original work by [neozeed](https://github.com/neozeed) in the [VHD-Utilities repository](https://github.com/neozeed/VHD-Utilities). The original source code has been modified and extended with additional command-line options, size suffix support, and VHD geometry handling improvements.
 
 ## Introduction
 
@@ -16,13 +14,13 @@ command line.
 
 ## System Requirements
 
-Windows 7 / Server 2008 R2 or newer is required. Windows 8 / Server 2012 or
-newer is required for in-place resizing (resizevhd) and VHDX support.
+Windows 7/Server 2008 R2 or newer is required. Windows 8/Server 2012 or newer is required for in-place resizing (resizevhd) and VHDX support.
 
 
 ## Usage
 
 Create a VHD:
+```
 makevhd [-d] [-c] [-s] vhd size [source]
 
   -d      Use dynamic allocation for the virtual disk.
@@ -33,15 +31,17 @@ makevhd [-d] [-c] [-s] vhd size [source]
           Suffixes: b=bytes (default), k=KiB, m=MiB, g=GiB, t=TiB.
           If set to 0, the size of the source disk, if available, will be used.
   source  Path of an optional source whose data will populate the new VHD.
-
+```
 Create a differencing VHD:
+```
 makevhd -f vhd parent
 
   -f      Create a differencing VHD.
   vhd     Path of the differencing VHD file to be created.
   parent  Path of an existing disk to be associated as the parent.
-
+```
 Resize a VHD in-place:
+```
 resizevhd [-f] vhd size
 
   -f      Forcibly truncate the data stored within the VHD, if necessary.
@@ -49,7 +49,7 @@ resizevhd [-f] vhd size
   size    Maximum size, in bytes, of the VHD; must be a multiple of 512.
           Alternatively, DVD or BD can be specified for preset sizes.
           If set to 0, reduce the VHD to the smallest possible size.
-
+```
 Notes:
   In-place resizing of a virtual disk (using resizevhd) can only be used to
   enlarge .vhd files; .vhdx files can be either enlarged or shrunken using
