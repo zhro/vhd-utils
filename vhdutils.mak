@@ -54,13 +54,19 @@ TARGET_1="$(BINDIR)\makevhd.$(TARGET_EXTENSION)"
 LINK_OBJS_1= \
 	"$(OBJDIR)\makevhd.obj" \
 	"$(OBJDIR)\EntryPoint.obj" \
-	"$(OBJDIR)\ParseNumber.obj"
+	"$(OBJDIR)\ParseUnsignedInteger.obj" \
+	"$(OBJDIR)\CalculateGeometry.h" \
+	"$(OBJDIR)\RoundToCHSSize.h" \
+	"$(OBJDIR)\SetVhdMaximumGeometry.h" \
+	"$(OBJDIR)\StringIntrinsics.h" \
+	"$(OBJDIR)\UpdateVhdFooterAt.h"
 
 TARGET_2="$(BINDIR)\resizevhd.$(TARGET_EXTENSION)"
 LINK_OBJS_2= \
 	"$(OBJDIR)\resizevhd.obj" \
 	"$(OBJDIR)\EntryPoint.obj" \
-	"$(OBJDIR)\ParseNumber.obj"
+	"$(OBJDIR)\ParseUnsignedInteger.obj"
+
 
 
 !IF "$(ARCH)" == "x86-32"
