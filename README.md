@@ -15,7 +15,7 @@ This project is based on the original work by [neozeed](https://github.com/neoze
 
 ### Create a VHD
 
-```cmd
+```text
 makevhd [-d] [-c] [-s] vhd size [source]
 
   -d      Use dynamic allocation for the virtual disk.
@@ -30,7 +30,7 @@ makevhd [-d] [-c] [-s] vhd size [source]
 
 Create a differencing VHD:
 
-```cmd
+```text
 makevhd -f vhd parent
 
   -f      Create a differencing VHD.
@@ -40,7 +40,7 @@ makevhd -f vhd parent
 
 Resize a VHD in-place:
 
-```cmd
+```text
 resizevhd [-f] vhd size
 
   -f      Forcibly truncate the data stored within the VHD, if necessary.
@@ -61,13 +61,13 @@ By default, the requested capacity is rounded up when necessary to accommodate t
 
 For example:
 
-```cmd
+```text
 makevhd disk.vhd 4m
 ```
 
 Specify the size directly in bytes:
 
-```cmd
+```text
 makevhd disk.vhd 10485760
 ```
 
@@ -79,7 +79,7 @@ Size suffixes are case-insensitive. The supported suffixes are `b` (bytes), `k` 
 
 Use `-s` to preserve the requested virtual disk size rather than rounding it up to a CHS-representable capacity to achieve a virtual capacity of exactly 4 MiB:
 
-```cmd
+```text
 makevhd -s disk.vhd 4m
 ```
 
@@ -99,7 +99,7 @@ If older software does not support maximum CHS values as a signal for LBA addres
 
 Use `-d` to create a dynamically allocated VHD whose backing file grows as data is written:
 
-```cmd
+```text
 makevhd -d disk.vhd 2g
 ```
 
@@ -109,7 +109,7 @@ This creates a virtual disk with a maximum capacity of 2 GiB without immediately
 
 Use `-c` to retain the Windows-default VHD sizing and geometry behavior:
 
-```cmd
+```text
 makevhd -c disk.vhd 4m
 ```
 
@@ -117,7 +117,7 @@ Unlike the default QEMU-compatible sizing behavior, this option does not round t
 
 If both `-s` and `-c` are specified, `-s` takes precedence and a warning is issued:
 
-```cmd
+```text
 makevhd -c -s disk.vhd 4m
 ```
 
@@ -125,7 +125,7 @@ makevhd -c -s disk.vhd 4m
 
 Provide an optional source to populate the new virtual disk:
 
-```cmd
+```text
 makevhd disk.vhd 2g source.img
 ```
 
@@ -135,7 +135,7 @@ The source argument supplies the data used to populate the new VHD. Ensure that 
 
 Equivalent ways to specify a 1 GiB capacity:
 
-```cmd
+```text
 makevhd disk.vhd 1073741824
 makevhd disk.vhd 1048576k
 makevhd disk.vhd 1024m
@@ -146,7 +146,7 @@ makevhd disk.vhd 1g
 
 Use `-f` to create a differencing VHD associated with an existing parent disk:
 
-```cmd
+```text
 makevhd -f child.vhd parent.vhd
 ```
 
@@ -154,7 +154,7 @@ The new `child.vhd` stores changes relative to `parent.vhd`. Keep the parent dis
 
 ### Merging a differencing VHD with its parent into a single combined dynamic VHD:
 
-```cmd
+```text
   makevhd -d merged.vhd 0 diff.vhd
 ```
 
