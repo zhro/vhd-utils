@@ -11,6 +11,10 @@ This project is based on the original work by [neozeed](https://github.com/neoze
 * **Windows 7 / Server 2008 R2** or newer is required for basic operations.
 * **Windows 8 / Server 2012** or newer is required for in-place resizing (`resizevhd`) and VHDX support.
 
+## Building
+
+For instructions on compiling, cleaning, and packaging `vhd-utils` from source, see [BUILD.md](BUILD.md).
+
 ## Usage
 
 ### Create a VHD
