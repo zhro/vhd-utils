@@ -1,4 +1,5 @@
-#include "SetVhdMaximumGeometry.h"
+#include "../include/SetVhdMaximumGeometry.h"
+#include "../include/UpdateVhdFooterAt.h"
 
 /*
  * Set the CHS geometry in a VHD file's footer to the maximum representable
@@ -16,7 +17,7 @@
  *   ERROR_SUCCESS if the geometry is updated successfully; otherwise,
  *   a Windows error code describing the failure.
  */
-static DWORD SetVhdMaximumGeometry(PTSTR pszPath)
+DWORD __fastcall SetVhdMaximumGeometry(PTSTR pszPath)
 {
     HANDLE hFile;
     LARGE_INTEGER fileSize;

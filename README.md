@@ -1,26 +1,21 @@
 # vhd-utils
-These are simple utilities to manipulate Virtual Hard Disks (VHD/VHDX) from the command line.
 
-This project is based on the original work by [neozeed](https://github.com/neozeed) in the [VHD-Utilities repository](https://github.com/neozeed/VHD-Utilities). The original source code has been modified and extended with additional command-line options, size suffix support, and VHD geometry handling improvements.
+Simple command-line utilities to manipulate Virtual Hard Disks (VHD/VHDX).
 
-VHD Utilities
-Version 1.1
+This project is based on the original work by [neozeed](https://github.com/neozeed) in the [VHD-Utilities repository](https://github.com/neozeed/VHD-Utilities). The source code has been modified and extended with additional command-line options, size suffix support, and VHD geometry handling improvements.
 
-## Introduction
-
-These are simple utilities to manipulate Virtual Hard Disks (VHD/VHDX) from the
-command line.
-
+**Version:** 1.1
 
 ## System Requirements
 
-Windows 7/Server 2008 R2 or newer is required. Windows 8/Server 2012 or newer is required for in-place resizing (resizevhd) and VHDX support.
-
+* **Windows 7 / Server 2008 R2** or newer is required for basic operations.
+* **Windows 8 / Server 2012** or newer is required for in-place resizing (`resizevhd`) and VHDX support.
 
 ## Usage
 
-Create a VHD:
-```
+### Create a VHD
+
+```cmd
 makevhd [-d] [-c] [-s] vhd size [source]
 
   -d      Use dynamic allocation for the virtual disk.
@@ -29,42 +24,45 @@ makevhd [-d] [-c] [-s] vhd size [source]
   vhd     Path of the VHD file to be created.
   size    Maximum size of the VHD; must be a multiple of 512.
           Suffixes: b=bytes (default), k=KiB, m=MiB, g=GiB, t=TiB.
-          If set to 0, the size of the source disk, if available, will be used.
+          If set to 0, the size of the source disk will be used.
   source  Path of an optional source whose data will populate the new VHD.
 ```
+
 Create a differencing VHD:
-```
+
+```cmd
 makevhd -f vhd parent
 
   -f      Create a differencing VHD.
   vhd     Path of the differencing VHD file to be created.
   parent  Path of an existing disk to be associated as the parent.
 ```
+
 Resize a VHD in-place:
-```
+
+```cmd
 resizevhd [-f] vhd size
 
   -f      Forcibly truncate the data stored within the VHD, if necessary.
   vhd     Path of the VHD file to be resized.
   size    Maximum size, in bytes, of the VHD; must be a multiple of 512.
-          Alternatively, DVD or BD can be specified for preset sizes.
           If set to 0, reduce the VHD to the smallest possible size.
+          
+Note: In-place resizing can only enlarge .vhd files, whereas .vhdx files can
+  be both enlarged or shrunken. To shrink a .vhd  file or resize a disk, use
+  makevhd to make a copy instead.
 ```
-Notes:
-  In-place resizing of a virtual disk (using resizevhd) can only be used to
-  enlarge .vhd files; .vhdx files can be either enlarged or shrunken using
-  resizevhd. To shrink a .vhd file or to resize a disk on Windows 7, use
-  makevhd instead (see Usage Examples below).
-
 
 ## Usage Examples
 
 ### Create a fixed-size VHD
 
-Create a 10 MiB VHD with the default CHS geometry handling:
+By default, the requested capacity is rounded up when necessary to accommodate the CHS geometry stored in the VHD footer for legacy system compatibility
+
+For example:
 
 ```cmd
-makevhd disk.vhd 10m
+makevhd disk.vhd 4m
 ```
 
 Specify the size directly in bytes:
@@ -73,7 +71,29 @@ Specify the size directly in bytes:
 makevhd disk.vhd 10485760
 ```
 
+By default, a size request may result in a slightly larger virtual capacity, so that the reported CHS geometry can represent the disk.
+
 Size suffixes are case-insensitive. The supported suffixes are `b` (bytes), `k` (KiB), `m` (MiB), `g` (GiB), and `t` (TiB). Unsuffixed values are interpreted as bytes.
+
+### Preserve the exact requested size
+
+Use `-s` to preserve the requested virtual disk size rather than rounding it up to a CHS-representable capacity to achieve a virtual capacity of exactly 4 MiB:
+
+```cmd
+makevhd -s disk.vhd 4m
+```
+
+This option sets the VHD footer to the maximum CHS values (`65535/16/255`) (representing a maximum capacity of 127.5 GiB) as a signal for modern cloud platforms and hypervisors to use exact byte lengths and LBA addressing.
+
+Using exact sizing is critical for modern storage backends and cloud platforms (such as Xen and XenServer/XCP-ng) for several reasons:
+
+* **Storage Allocation and Block Alignment:** Storage pools like LVM or ZFS manage data in clean binary increments. CHS padding introduces non-standard trailing sector counts that disrupt block alignment.
+
+* **Migration and Conversion Tools:** Automated tooling often validates disk sizes against strict metadata limits, and CHS padding can cause import validation errors or replication failures.
+
+* **Partition Integrity:** Modern guest OS partitioning utilities rely on exact byte lengths to calculate GPT backup header locations at the end of the disk.
+
+If older software does not support maximum CHS values as a signal for LBA addressing, use the `-c` option instead to fall back to Windows-default CHS geometry.
 
 ### Create a dynamically allocated VHD
 
@@ -84,30 +104,6 @@ makevhd -d disk.vhd 2g
 ```
 
 This creates a virtual disk with a maximum capacity of 2 GiB without immediately allocating the entire capacity on the host filesystem.
-
-### Use QEMU-compatible CHS sizing
-
-By default, the requested capacity is rounded up when necessary to accommodate the CHS geometry stored in the VHD footer.
-
-For example:
-
-```cmd
-makevhd disk.vhd 4m
-```
-
-A 4 MiB request may result in a slightly larger virtual capacity so that the reported CHS geometry can represent the disk.
-
-### Preserve the exact requested size
-
-Use `-s` to preserve the requested virtual disk size rather than rounding it up to a CHS-representable capacity:
-
-```cmd
-makevhd -s disk.vhd 4m
-```
-
-This option sets the VHD footer geometry to the maximum CHS values (`65535/16/255`) and updates the footer checksum. The resulting virtual capacity remains exactly 4 MiB.
-
-Use this option when exact capacity is more important than providing conventional CHS geometry metadata.
 
 ### Use Windows-compatible sizing behavior
 
@@ -135,6 +131,17 @@ makevhd disk.vhd 2g source.img
 
 The source argument supplies the data used to populate the new VHD. Ensure that the requested capacity is sufficient for the source data.
 
+### Specify a size using different units
+
+Equivalent ways to specify a 1 GiB capacity:
+
+```cmd
+makevhd disk.vhd 1073741824
+makevhd disk.vhd 1048576k
+makevhd disk.vhd 1024m
+makevhd disk.vhd 1g
+```
+
 ### Create a differencing VHD
 
 Use `-f` to create a differencing VHD associated with an existing parent disk:
@@ -145,23 +152,12 @@ makevhd -f child.vhd parent.vhd
 
 The new `child.vhd` stores changes relative to `parent.vhd`. Keep the parent disk available and unchanged so the differencing disk can access its original data.
 
-### Specify a size using different units
-
-The following commands illustrate equivalent ways to specify a 1 GiB capacity:
+### Merging a differencing VHD with its parent into a single combined dynamic VHD:
 
 ```cmd
-makevhd disk.vhd 1073741824
-makevhd disk.vhd 1048576k
-makevhd disk.vhd 1024m
-makevhd disk.vhd 1g
+  makevhd -d merged.vhd 0 diff.vhd
 ```
 
-### Size requirements
+### Size constraints
 
-The minimum supported VHD size is **3,168,256 bytes (6,188 sectors)**. Disk sizes must be multiples of 512 bytes. A size that is too small or invalid may be rejected, and a size that is not sector-aligned may produce an error or warning depending on the outcome of VHD creation.
-
-Merging a differencing VHD with its parent into a single combined dynamic VHD:
-  makevhd -d merged.vhd 0 diff.vhd
-
-Merging into a fully-allocated VHD that can be backed up onto a DVD-R:
-  makevhd merged.vhd DVD diff.vhd
+The minimum supported VHD size is 3,168,256 bytes (6,188 sectors). Disk sizes must be multiples of 512 bytes. Invalid or non-aligned sizes will result in errors or warnings.

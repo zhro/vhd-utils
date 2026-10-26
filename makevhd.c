@@ -3,252 +3,24 @@
 #define INITGUID
 
 #include <windows.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <tchar.h>
 #include <virtdisk.h>
-#include "libs\StringIntrinsics.h"
-#include "libs\ParseNumber.h"
+
+#include "include/CalculateGeometry.h"
+#include "include/ParseUnsignedInteger.h"
+#include "include/RoundToCHSSize.h"
+#include "include/SetVhdMaximumGeometry.h"
+#include "include/StringIntrinsics.h"
+#include "include/UpdateVhdFooterAt.h"
+
 
 __forceinline BOOLEAN IsFlag( PCTSTR pszArg );
 __forceinline BOOLEAN CheckFlagI( PCTSTR pszArg, TCHAR ch );
 
-#define VHD_MAX_GEOMETRY ((UINT64)65535 * 16 * 255)
 #define VHD_MINIMUM_SIZE 3168256ULL
-
-static void CalculateGeometry(
-    UINT64 totalSectors,
-    USHORT *cylinders,
-    BYTE *heads,
-    BYTE *sectorsPerTrack)
-{
-    UINT64 cylindersTimesHeads;
-
-    if (totalSectors > VHD_MAX_GEOMETRY)
-        totalSectors = VHD_MAX_GEOMETRY;
-
-    if (totalSectors >= (UINT64)65535 * 16 * 63)
-    {
-        *sectorsPerTrack = 255;
-        *heads = 16;
-        cylindersTimesHeads = totalSectors / *sectorsPerTrack;
-    }
-    else
-    {
-        *sectorsPerTrack = 17;
-        cylindersTimesHeads = totalSectors / *sectorsPerTrack;
-
-        *heads = (BYTE)((cylindersTimesHeads + 1023) / 1024);
-
-        if (*heads < 4)
-            *heads = 4;
-
-        if (cylindersTimesHeads >= (UINT64)*heads * 1024 ||
-            *heads > 16)
-        {
-            *sectorsPerTrack = 31;
-            *heads = 16;
-            cylindersTimesHeads = totalSectors / *sectorsPerTrack;
-        }
-
-        if (cylindersTimesHeads >= (UINT64)*heads * 1024)
-        {
-            *sectorsPerTrack = 63;
-            *heads = 16;
-            cylindersTimesHeads = totalSectors / *sectorsPerTrack;
-        }
-    }
-
-    *cylinders = (USHORT)(cylindersTimesHeads / *heads);
-}
-
-static BOOL RoundToCHSSize(UINT64 *sizeBytes)
-{
-    UINT64 requestedSectors;
-    UINT64 candidateSectors;
-    UINT64 geometrySectors;
-    USHORT cylinders = 0;
-    BYTE heads = 0;
-    BYTE sectorsPerTrack = 0;
-
-    if (*sizeBytes == 0)
-        return TRUE;
-
-    if ((*sizeBytes % 512) != 0)
-        return FALSE;
-
-    requestedSectors = *sizeBytes / 512;
-
-    /*
-     * QEMU uses the requested size directly when the maximum
-     * representable CHS geometry is reached.
-     */
-    if (requestedSectors >= VHD_MAX_GEOMETRY)
-        return TRUE;
-
-    candidateSectors = requestedSectors;
-
-    for (;;)
-    {
-        CalculateGeometry(
-            candidateSectors,
-            &cylinders,
-            &heads,
-            &sectorsPerTrack);
-
-        geometrySectors =
-            (UINT64)cylinders * heads * sectorsPerTrack;
-
-        if (geometrySectors >= requestedSectors)
-            break;
-
-        if (candidateSectors == VHD_MAX_GEOMETRY)
-            return FALSE;
-
-        ++candidateSectors;
-    }
-
-    *sizeBytes = geometrySectors * 512;
-    return TRUE;
-}
-
-static DWORD UpdateVhdFooterAt(
-    HANDLE hFile,
-    LARGE_INTEGER offset)
-{
-    BYTE footer[512];
-    DWORD cbRead;
-    DWORD cbWritten;
-    DWORD i;
-    DWORD sum = 0;
-    DWORD checksum;
-    LARGE_INTEGER position;
-
-    if (!SetFilePointerEx(hFile, offset, &position, FILE_BEGIN))
-        return GetLastError();
-
-    if (!ReadFile(hFile, footer, sizeof(footer), &cbRead, NULL))
-        return GetLastError();
-
-    if (cbRead != sizeof(footer))
-        return ERROR_HANDLE_EOF;
-
-    if (memcmp(footer, "conectix", 8) != 0)
-        return ERROR_BAD_FORMAT;
-
-    /* Maximum VHD CHS geometry: 65535 / 16 / 255. */
-    footer[56] = 0xFF;
-    footer[57] = 0xFF;
-    footer[58] = 16;
-    footer[59] = 255;
-
-    /* Clear the checksum field before calculating it. */
-    memset(footer + 64, 0, 4);
-
-    for (i = 0; i < sizeof(footer); ++i)
-        sum += footer[i];
-
-    checksum = ~sum;
-
-    /* Store the checksum in big-endian byte order. */
-    footer[64] = (BYTE)(checksum >> 24);
-    footer[65] = (BYTE)(checksum >> 16);
-    footer[66] = (BYTE)(checksum >> 8);
-    footer[67] = (BYTE)checksum;
-
-    if (!SetFilePointerEx(hFile, offset, &position, FILE_BEGIN))
-        return GetLastError();
-
-    if (!WriteFile(hFile, footer, sizeof(footer), &cbWritten, NULL))
-        return GetLastError();
-
-    if (cbWritten != sizeof(footer))
-        return ERROR_WRITE_FAULT;
-
-    return ERROR_SUCCESS;
-}
-
-static DWORD SetVhdMaximumGeometry(PTSTR pszPath)
-{
-    HANDLE hFile;
-    LARGE_INTEGER fileSize;
-    LARGE_INTEGER offset;
-    LARGE_INTEGER position;
-    BYTE cookie[8];
-    DWORD cbRead;
-    DWORD dwResult;
-
-    hFile = CreateFile(
-        pszPath,
-        GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ,
-        NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        NULL);
-
-    if (hFile == INVALID_HANDLE_VALUE)
-        return GetLastError();
-
-    if (!GetFileSizeEx(hFile, &fileSize))
-    {
-        dwResult = GetLastError();
-        CloseHandle(hFile);
-        return dwResult;
-    }
-
-    if (fileSize.QuadPart < 512)
-    {
-        CloseHandle(hFile);
-        return ERROR_BAD_FORMAT;
-    }
-
-    /* The trailing footer exists for fixed, dynamic and differencing VHDs. */
-    offset.QuadPart = fileSize.QuadPart - 512;
-
-    dwResult = UpdateVhdFooterAt(hFile, offset);
-
-    if (dwResult != ERROR_SUCCESS)
-    {
-        CloseHandle(hFile);
-        return dwResult;
-    }
-
-    /*
-     * Dynamic and differencing VHDs also have a footer at offset zero.
-     * Patch it only if the cookie identifies a VHD footer.
-     */
-    offset.QuadPart = 0;
-
-    if (!SetFilePointerEx(hFile, offset, &position, FILE_BEGIN))
-    {
-        dwResult = GetLastError();
-        CloseHandle(hFile);
-        return dwResult;
-    }
-
-    if (!ReadFile(hFile, cookie, sizeof(cookie), &cbRead, NULL))
-    {
-        dwResult = GetLastError();
-        CloseHandle(hFile);
-        return dwResult;
-    }
-
-    if (cbRead == sizeof(cookie) &&
-        memcmp(cookie, "conectix", sizeof(cookie)) == 0)
-    {
-        dwResult = UpdateVhdFooterAt(hFile, offset);
-
-        if (dwResult != ERROR_SUCCESS)
-        {
-            CloseHandle(hFile);
-            return dwResult;
-        }
-    }
-
-    CloseHandle(hFile);
-    return ERROR_SUCCESS;
-}
 
 UINT __fastcall EntryMain( UINT argc, PTSTR *argv )
 {
@@ -395,7 +167,7 @@ UINT __fastcall EntryMain( UINT argc, PTSTR *argv )
                TEXT("  vhd     Path of the VHD file to be created.\n")
                TEXT("  size    Maximum size of the VHD; must be a multiple of 512.\n")
                TEXT("          Suffixes: b=bytes (default), k=KiB, m=MiB, g=GiB, t=TiB.\n")
-               TEXT("          If set to 0, the size of the source disk, if available, will be used.\n")
+               TEXT("          If set to 0, the size of the source disk will be used.\n")
                TEXT("  source  Path of an optional source whose data will populate the new VHD.\n\n"));
 
       _tprintf(TEXT("Usage: makevhd -f vhd parent\n\n"));
