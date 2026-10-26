@@ -20,7 +20,7 @@
 __forceinline BOOLEAN IsFlag( PCTSTR pszArg );
 __forceinline BOOLEAN CheckFlagI( PCTSTR pszArg, TCHAR ch );
 
-#define VHD_MINIMUM_SIZE 3168256ULL
+#define VHD_MINIMUM_SIZE 3145728ULL
 
 UINT __fastcall EntryMain( UINT argc, PTSTR *argv )
 {
@@ -143,8 +143,7 @@ UINT __fastcall EntryMain( UINT argc, PTSTR *argv )
 
          free(pszSize);
          
-         if (!fForceSize && cbTargetSize != 0 &&
-             cbTargetSize == 3 * 1024 * 1024)
+         if (cbTargetSize == 3 * 1024 * 1024)
              cbTargetSize = VHD_MINIMUM_SIZE;
          
          if (cbTargetSize != 0 && cbTargetSize < VHD_MINIMUM_SIZE)
