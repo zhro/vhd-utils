@@ -137,15 +137,15 @@ UINT __fastcall EntryMain( UINT argc, PTSTR *argv )
 
          if (!ParseUnsignedInteger(pszSize, &cbTargetSize) ||
             cbTargetSize > ((UINT64)-1) / cbMultiplier)
-         {
             fShowUsage = TRUE;
-         }
          else
-         {
             cbTargetSize *= cbMultiplier;
-         }
 
          free(pszSize);
+         
+         if (!fForceSize && cbTargetSize != 0 &&
+             cbTargetSize == 3 * 1024 * 1024)
+             cbTargetSize = VHD_MINIMUM_SIZE;
          
          if (cbTargetSize != 0 && cbTargetSize < VHD_MINIMUM_SIZE)
          {
