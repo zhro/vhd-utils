@@ -4,7 +4,7 @@ Simple command-line utilities to manipulate Virtual Hard Disks (VHD/VHDX).
 
 This project is based on the original work by [neozeed](https://github.com/neozeed) in the [VHD-Utilities repository](https://github.com/neozeed/VHD-Utilities). The source code has been modified and extended with additional command-line options, size suffix support, and VHD geometry handling improvements.
 
-**Version:** 1.1
+**Version:** 1.1.0
 
 ## System Requirements
 

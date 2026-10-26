@@ -164,10 +164,10 @@ DIST : DEFAULT
 	copy $(BINDIR:/=\)\* build\staging\bin 1>NUL
 	cd build\staging & md5sum bin/* 1>"$(PROJECT_NAME).md5"
 	copy README.md build\staging 1>NUL
-	@echo off & for /f %%D in ('call build\date.bat') do \
-	tar -caf "dist\$(PROJECT_NAME)-win-$(ARCH)-%%D.zip" -C build\staging *
+	@echo off & for /f %%V in (VERSION) do for /f %%D in ('call build\date.bat -v') do \
+	tar -caf "dist\$(PROJECT_NAME)-win-$(ARCH)-%%V-%%D.zip" -C build\staging *
 	@if exist "build/staging" rmdir /s /q "build/staging"
-
+	@call build\version.bat -w
 clean:
 	@if exist "build/bin" rmdir /s /q "build/bin"
 	@if exist "build/obj" rmdir /s /q "build/obj"
