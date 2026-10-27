@@ -12,6 +12,8 @@ Open the appropriate **Developer Command Prompt for Visual Studio** (e.g., *VS20
 
 ## Common Build Commands
 
+### standard `make` Commands
+
 * **Default / Full Build:**
   ```cmd
   make
@@ -30,6 +32,33 @@ Open the appropriate **Developer Command Prompt for Visual Studio** (e.g., *VS20
   make dist
   ```
   Builds the binaries and packages the release distribution into a `.zip` archive located in the `dist/<ARCH>` directory.
+
+---
+
+## Helper Scripts
+
+The repository includes helper batch scripts (`make.bat` and `clean.bat`) for convenience.
+
+### `make.bat` 
+
+`make.bat` is a wrapper script around `nmake`.
+
+```cmd
+Usage: make.bat [CPPVER=version] [ARCH=architecture] [targets...]
+
+Options:
+  CPPVER=version    Visual Studio toolset version (e.g., 110, 120, 140, 150)
+  ARCH=architecture Target architecture (x86 or x64)
+  --help            Display this help message
+```
+
+### `clean.bat`
+
+`clean.bat` removes build artifacts directly, without requiring `nmake` or Visual Studio environment dependencies.
+
+```cmd
+Usage: clean.bat [-x86 | -x64 | --help]
+```
 
 ---
 
