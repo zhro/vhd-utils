@@ -155,10 +155,10 @@ LINKFLAGS_2=$(LINKFLAGS_STD) $(LINKFLAGS_DLL) $(LINKFLAGS_TARG_2) $(LINKFLAGS_EX
 # Recipes and rules
 ################################################################################
 
-ALL : DEFAULT
-DEFAULT : "$(BINDIR)" "$(OBJDIR)" $(TARGET_1) $(TARGET_2)
+ALL: DEFAULT
+DEFAULT: "$(BINDIR)" "$(OBJDIR)" $(TARGET_1) $(TARGET_2)
 
-DIST : DEFAULT
+DIST: DEFAULT
 	@if not exist "build\staging\bin" md "build\staging\bin"
 	@if not exist "dist" md "dist"
 	copy $(BINDIR:/=\)\* build\staging\bin 1>NUL
@@ -168,26 +168,23 @@ DIST : DEFAULT
 	tar -caf "dist\$(PROJECT_NAME)-win-$(ARCH)-%%V-%%D.zip" -C build\staging *
 	@if exist "build/staging" rmdir /s /q "build/staging"
 	@call build\version.bat -w
-clean:
-	@if exist "build/bin" rmdir /s /q "build/bin"
-	@if exist "build/obj" rmdir /s /q "build/obj"
-	@del dist\* /q
-	@touch dist\.gitignore
+CLEAN:
+	@call clean.bat
 
-$(TARGET_1) : $(LINK_OBJS_1)
+$(TARGET_1): $(LINK_OBJS_1)
 	$(LINK) @<<
 	$(LINKFLAGS_1) $(LINK_OBJS_1) /OUT:$@
 <<
 
-$(TARGET_2) : $(LINK_OBJS_2)
+$(TARGET_2): $(LINK_OBJS_2)
 	$(LINK) @<<
 	$(LINKFLAGS_2) $(LINK_OBJS_2) /OUT:$@
 <<
 
-"$(BINDIR)" :
+"$(BINDIR)":
 	-@md $@
 
-"$(OBJDIR)" :
+"$(OBJDIR)":
 	-@md $@
 
 .rc{$(OBJDIR)}.res:

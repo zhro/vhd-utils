@@ -1,3 +1,6 @@
 @echo off
+setlocal
 
-nmake.exe /nologo %*
+set SCRIPT_NAME=%~nx0
+
+call nmake.bat %*

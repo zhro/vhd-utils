@@ -164,4 +164,4 @@ The new `child.vhd` stores changes relative to `parent.vhd`. Keep the parent dis
 
 ### Size constraints
 
-The minimum supported VHD size is 3,168,256 bytes (6,188 sectors). Disk sizes must be multiples of 512 bytes. Invalid or non-aligned sizes will result in errors or warnings.
+The minimum supported VHD size is 3,145,728 bytes (6,144 sectors). Disk sizes must be multiples of 512 bytes. Invalid or non-aligned sizes will result in errors or warnings.
