@@ -15,20 +15,20 @@ Open the appropriate **Developer Command Prompt for Visual Studio** (e.g., *VS20
 ### standard `make` Commands
 
 * **Default / Full Build:**
-  ```cmd
+  ```text
   make
   ```
   *(or `make all` — specifying `all` is optional)*  
   Compiles all sources and creates the target executables in the appropriate output directory (`build/bin/<ARCH>/`).
 
 * **Clean Build Files:**
-  ```cmd
+  ```text
   make clean
   ```
   Removes temporary build objects, binaries, and intermediate directories.
 
 * **Package Release Distribution:**
-  ```cmd
+  ```text
   make dist
   ```
   Builds the binaries and packages the release distribution into a `.zip` archive located in the `dist/<ARCH>` directory.
@@ -43,7 +43,7 @@ The repository includes helper batch scripts (`make.bat` and `clean.bat`) for co
 
 `make.bat` is a wrapper script around `nmake`.
 
-```cmd
+```text
 Usage: make.bat [CPPVER=version] [ARCH=architecture] [targets...]
 
 Options:
@@ -56,7 +56,7 @@ Options:
 
 `clean.bat` removes build artifacts directly, without requiring `nmake` or Visual Studio environment dependencies.
 
-```cmd
+```text
 Usage: clean.bat [-x86 | -x64 | --help]
 ```
 
@@ -70,7 +70,7 @@ You can customize the build configuration by passing variables to `make`:
   Specifies the target architecture.  
   * **Auto-detection:** If omitted, `ARCH` is automatically detected by inspecting your Visual Studio command prompt environment variables (such as `PLATFORM`, `VSCMD_ARG_TGT_ARCH`, or the `LIB` path).
   * **Manual override example:**
-    ```cmd
+    ```text
     make ARCH=x64
     ```
 
@@ -78,7 +78,7 @@ You can customize the build configuration by passing variables to `make`:
   Specifies the Visual Studio C++ compiler version code (e.g., `140` for VS 2015).  
   * **Auto-detection:** If omitted, `CPPVER` is automatically detected by reading the `VISUALSTUDIOVERSION` environment variable.
   * **Manual override example:**
-    ```cmd
+    ```text
     make CPPVER=140
     ```
 
